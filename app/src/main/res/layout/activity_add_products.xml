@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:id="@+id/main"
+    android:background="@android:color/white"
+    android:layout_height="match_parent"
+    >
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp">
+
+        <ImageView
+            android:id="@+id/back_arrow"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/back"
+            android:contentDescription="Back"
+            android:layout_gravity="start" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Product"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_marginTop="24dp"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@android:color/black" />
+
+
+        <EditText
+            android:id="@+id/input_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Item Name"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/edit_text_bg"
+            android:textSize="16sp"
+            android:padding="12dp"
+            />
+
+
+        <EditText
+            android:id="@+id/category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Category"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/edit_text_bg"
+            android:textSize="16sp"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/input_description"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:hint="Information/ description of the product"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/edit_text_bg"
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:textSize="16sp"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/input_price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Price in PKR"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/edit_text_bg"
+            android:inputType="numberDecimal"
+            android:textSize="16sp"
+            android:padding="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="24dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add an image:"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/button_choose_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose an image"
+                android:layout_marginStart="12dp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp" />
+        </LinearLayout>
+        <ImageView
+            android:layout_gravity="center"
+            android:id="@+id/image_preview"
+            android:layout_width="175dp"
+            android:layout_height="175dp"
+            android:layout_marginTop="12dp"
+            android:scaleType="fitCenter" />
+        <Button
+            android:id="@+id/button_add"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ADD"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@android:color/holo_green_dark"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:paddingVertical="16dp"
+            android:layout_marginBottom="24dp"
+            android:layout_gravity="center" />
+
+    </LinearLayout>
+</ScrollView>
