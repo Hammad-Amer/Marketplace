@@ -71,6 +71,7 @@
                 android:layout_weight="1"/>
 
             <Button
+                android:id="@+id/sortBtn"
                 android:text="Sort"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -78,6 +79,7 @@
                 android:textColor="#000000" />
 
             <Button
+                android:id="@+id/filterBtn"
                 android:text="Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

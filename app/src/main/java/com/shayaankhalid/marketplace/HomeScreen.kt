@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
@@ -18,11 +19,16 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import org.json.JSONObject
+import androidx.appcompat.app.AlertDialog
 
 class Homescreen : AppCompatActivity() {
 
     private lateinit var categoryAdapter: CategoryAdapter
     private lateinit var productRecyclerView: RecyclerView
+    private lateinit var productAdapter: ProductAdapter
+    private var productList: MutableList<Product> = mutableListOf()
+
+    private var sortDescending = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +41,41 @@ class Homescreen : AppCompatActivity() {
 
         productRecyclerView = findViewById(R.id.productRecyclerView)
         productRecyclerView.layoutManager = GridLayoutManager(this, 2)
+
+        val sortButton = findViewById<Button>(R.id.sortBtn)
+        sortButton.setOnClickListener {
+            sortProducts()
+        }
+
+        val filterButton = findViewById<Button>(R.id.filterBtn)
+        filterButton.setOnClickListener {
+            val options = arrayOf("Show All", "Less than 10,000", "10,000 to 100,000", "Greater than 100,000")
+
+            AlertDialog.Builder(this)
+                .setTitle("Filter by Price")
+                .setItems(options) { _, which ->
+                    val filteredList = when (which) {
+                        0 -> productList
+                        1 -> productList.filter { it.price.toDouble() < 10000 }
+                        2 -> productList.filter { it.price.toDouble() in 10000.0..100000.0 }
+                        3 -> productList.filter { it.price.toDouble() > 100000 }
+                        else -> productList
+                    }
+
+                    val productAdapter = ProductAdapter(filteredList) { product ->
+                        val intent = Intent(this, ViewProduct::class.java).apply {
+                            putExtra("title", product.title)
+                            putExtra("description", product.description)
+                            putExtra("price", product.price)
+                            putExtra("imageBase64", product.imageBase64)
+                        }
+                        startActivity(intent)
+                    }
+
+                    productRecyclerView.adapter = productAdapter
+                }
+                .show()
+        }
 
         loadOtherProducts()
     }
@@ -97,11 +138,9 @@ class Homescreen : AppCompatActivity() {
 
             try {
                 val json = JSONObject(response)
-                Log.d(TAG, "Parsed JSON object successfully")
-
                 if (json.getBoolean("success")) {
                     val posts = json.getJSONArray("posts")
-                    val productList = mutableListOf<Product>()
+                    productList.clear()
 
                     for (i in 0 until posts.length()) {
                         val post = posts.getJSONObject(i)
@@ -111,11 +150,10 @@ class Homescreen : AppCompatActivity() {
                             price = post.getString("price"),
                             imageBase64 = post.getString("image")
                         )
-                        Log.d(TAG, "Parsed product: $product")
                         productList.add(product)
                     }
 
-                    val productAdapter = ProductAdapter(productList) { product ->
+                    productAdapter = ProductAdapter(productList) { product ->
                         val intent = Intent(this, ViewProduct::class.java).apply {
                             putExtra("title", product.title)
                             putExtra("description", product.description)
@@ -129,7 +167,6 @@ class Homescreen : AppCompatActivity() {
                     Log.d(TAG, "Product adapter set with ${productList.size} products")
 
                 } else {
-                    Log.e(TAG, "Server response indicated failure")
                     Toast.makeText(this, "Failed to load products", Toast.LENGTH_SHORT).show()
                 }
 
@@ -148,7 +185,25 @@ class Homescreen : AppCompatActivity() {
         }
 
         Volley.newRequestQueue(this).add(request)
-        Log.d(TAG, "Volley request sent")
+    }
+
+    private fun sortProducts() {
+        sortDescending = !sortDescending
+
+        productList.sortWith(compareBy { product ->
+            product.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
+        })
+
+        if (sortDescending) {
+            productList.reverse()
+        }
+
+        productAdapter.notifyDataSetChanged()
+        Toast.makeText(
+            this,
+            if (sortDescending) "Sorted: High to Low" else "Sorted: Low to High",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun decodeBase64ToBitmap(base64Str: String): Bitmap {
