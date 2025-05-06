@@ -68,6 +68,7 @@ class Homescreen : AppCompatActivity() {
                             putExtra("description", product.description)
                             putExtra("price", product.price)
                             putExtra("imageBase64", product.imageBase64)
+                            putExtra("p_id", product.p_id)
                         }
                         startActivity(intent)
                     }
@@ -78,6 +79,18 @@ class Homescreen : AppCompatActivity() {
         }
 
         loadOtherProducts()
+
+        val swipeRefreshLayout = findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipeRefreshLayout)
+
+        swipeRefreshLayout.setOnRefreshListener {
+            loadOtherProducts()
+
+            swipeRefreshLayout.postDelayed(
+                {
+                swipeRefreshLayout.isRefreshing = false
+            }, 2000)
+        }
+
     }
 
     private fun setupCategoryList() {
@@ -148,7 +161,8 @@ class Homescreen : AppCompatActivity() {
                             title = post.getString("title"),
                             description = post.getString("description"),
                             price = post.getString("price"),
-                            imageBase64 = post.getString("image")
+                            imageBase64 = post.getString("image"),
+                            p_id = post.getInt("id")
                         )
                         productList.add(product)
                     }
@@ -159,6 +173,7 @@ class Homescreen : AppCompatActivity() {
                             putExtra("description", product.description)
                             putExtra("price", product.price)
                             putExtra("imageBase64", product.imageBase64)
+                            putExtra("p_id", product.p_id)
                         }
                         startActivity(intent)
                     }

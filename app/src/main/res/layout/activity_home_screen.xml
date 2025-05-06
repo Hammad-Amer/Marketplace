@@ -101,26 +101,26 @@
             android:layout_marginTop="12dp"
             android:overScrollMode="never"
             android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-
-            />
+            android:paddingEnd="4dp" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="#000000"/>
 
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/productRecyclerView"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="70dp"
-            />
+            android:layout_marginBottom="70dp">
 
-
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/productRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="16dp" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </LinearLayout>
     <com.google.android.material.bottomnavigation.BottomNavigationView

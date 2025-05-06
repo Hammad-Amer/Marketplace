@@ -26,6 +26,7 @@ class ViewProduct : AppCompatActivity() {
         val productDesc = intent.getStringExtra("description") ?: "N/A"
         val productPrice = intent.getStringExtra("price") ?: "N/A"
         val productImageBase64 = intent.getStringExtra("imageBase64")
+        val p_id = intent.getIntExtra("p_id", -1)
 
         title.text = productName
         desc.text = productDesc
@@ -50,7 +51,13 @@ class ViewProduct : AppCompatActivity() {
 
         buyBtn.setOnClickListener {
             Toast.makeText(this, "Purchase started!", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, Buy::class.java)
+            val intent = Intent(this, Buy::class.java).apply {
+                putExtra("title", productName)
+                putExtra("description", productDesc)
+                putExtra("price", productPrice)
+                putExtra("imageBase64", productImageBase64)
+                putExtra("p_id", p_id)
+            }
             startActivity(intent)
         }
     }

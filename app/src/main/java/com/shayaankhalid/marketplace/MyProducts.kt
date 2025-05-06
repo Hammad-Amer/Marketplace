@@ -74,6 +74,18 @@ class MyProducts : AppCompatActivity() {
             startActivity(intent)
             finishAffinity()
         }
+
+        val swipeRefreshLayout = findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipeRefreshLayout)
+
+        swipeRefreshLayout.setOnRefreshListener {
+            fetchMyProducts()
+
+            swipeRefreshLayout.postDelayed(
+                {
+                    swipeRefreshLayout.isRefreshing = false
+                }, 2000)
+        }
+
     }
 
     private fun deleteProductFromServer(productId: Int, position: Int) {
