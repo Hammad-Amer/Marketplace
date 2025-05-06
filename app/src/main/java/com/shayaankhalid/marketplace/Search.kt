@@ -2,61 +2,224 @@ package com.shayaankhalid.marketplace
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Base64
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import org.json.JSONObject
+import android.app.AlertDialog
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.widget.Button
+import android.widget.ImageView
+import androidx.core.graphics.drawable.toBitmap
 
 class Search : AppCompatActivity() {
 
     private lateinit var productAdapter: SearchProductAdapter
+    private lateinit var searchBox: EditText
+    private lateinit var productRecyclerView: RecyclerView
 
+    private var allProducts: MutableList<ModelSearchProduct> = mutableListOf()
+    private var sortDescending = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_search)
 
-        //  val categoryRecyclerView = findViewById<RecyclerView>(R.id.categoryRecyclerView)
-        val productRecyclerView = findViewById<RecyclerView>(R.id.productRecyclerView)
+        productRecyclerView = findViewById(R.id.productRecyclerView)
+        searchBox = findViewById(R.id.searchbox)
 
-//        // Sample data
-//        val categories = listOf(
-//            Category(R.drawable.ic_laptop, "Laptops"),
-//            Category(R.drawable.ic_mobile, "Mobiles"),
-//            Category(R.drawable.ic_tablet, "Tablets"),
-//            Category(R.drawable.ic_watch, "Watches"),
-//            Category(R.drawable.ic_camera, "Cameras")
-//        )
+        val sortButton = findViewById<Button>(R.id.sortBtn)
+        sortButton.setOnClickListener {
+            sortProducts()
+        }
 
-        val products = listOf(
-            ModelSearchProduct("Dell XPS 13",  "300,000 PKR", R.drawable.dell_xps),
-            ModelSearchProduct("Samsung Galaxy S24 Ultra",  "399,999 PKR", R.drawable.s24_ultra),
-            ModelSearchProduct("Sony Alpha a6400",  "280,000 PKR", R.drawable.sony_camera),
-            ModelSearchProduct("Apple Watch Series 9",  "130,000 PKR", R.drawable.apple_watch)
-        )
+        val filterButton = findViewById<Button>(R.id.filterBtn)
+        filterButton.setOnClickListener {
+            showFilterOptions()
+        }
 
-//        categoryAdapter = CategoryAdapter(categories)
-//        categoryRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-//        categoryRecyclerView.adapter = categoryAdapter
-
-
-
-        productAdapter = SearchProductAdapter(products) { product ->
-            val intent = Intent(this, ViewProduct::class.java)
-            intent.putExtra("title", "dell xps 13")
-            intent.putExtra("description", "Great for professionals")
-            intent.putExtra("price", "300,000 PKR")
-            intent.putExtra("image", R.drawable.dell_xps)
+        productAdapter = SearchProductAdapter(allProducts) { product ->
+            val intent = Intent(this, ViewProduct::class.java).apply {
+                putExtra("title", product.title)
+                putExtra("description", product.description)
+                putExtra("price", product.price)
+                putExtra("imageBase64", product.imageBase64)
+                putExtra("p_id", product.p_id)
+            }
             startActivity(intent)
         }
+
         productRecyclerView.layoutManager = GridLayoutManager(this, 2)
         productRecyclerView.adapter = productAdapter
 
 
 
+        setupBottomNav()
+        loadProductsFromServer()
+        setupSearchBox()
+        setupProfileImage()
+    }
+
+    private fun setupProfileImage() {
+        val profileImage = findViewById<ImageView>(R.id.editprofile)
+        val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
+        val pfpBase64 = sharedPref.getString("pfp", null)
+
+        val bitmap = if (!pfpBase64.isNullOrEmpty()) {
+            try {
+                decodeBase64ToBitmap(pfpBase64)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+
+        profileImage.setImageBitmap(bitmap ?: getDrawable(R.drawable.empty_user)?.toBitmap())
+        profileImage.setOnClickListener {
+            startActivity(Intent(this, EditProfile::class.java))
+        }
+    }
+
+    private fun sortProducts() {
+        sortDescending = !sortDescending
+
+        allProducts.sortWith(compareBy { product ->
+            product.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
+        })
+
+        if (sortDescending) {
+            allProducts.reverse()
+        }
+
+        productAdapter.updateData(allProducts)
+
+        Toast.makeText(
+            this,
+            if (sortDescending) "Sorted: High to Low" else "Sorted: Low to High",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun showFilterOptions() {
+        val options = arrayOf("Show All", "Less than 10,000", "10,000 to 100,000", "Greater than 100,000")
+
+        AlertDialog.Builder(this)
+            .setTitle("Filter by Price")
+            .setItems(options) { _, which ->
+                val filteredList = when (which) {
+                    0 -> allProducts // Show all products
+                    1 -> allProducts.filter { it.price.toDouble() < 10000 }
+                    2 -> allProducts.filter { it.price.toDouble() in 10000.0..100000.0 }
+                    3 -> allProducts.filter { it.price.toDouble() > 100000 }
+                    else -> allProducts
+                }
+
+                applySearchAndFilter(filteredList)
+            }
+            .show()
+    }
+
+
+    private fun setupSearchBox() {
+        searchBox.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString().trim().lowercase()
+
+                if (query.isEmpty()) {
+                    applySearchAndFilter(emptyList())
+                    return
+                }
+
+                val queryWords = query.split(" ")
+
+                val filtered = allProducts.filter { product ->
+                    val titleWords = product.title.lowercase().split(" ")
+                    val categoryWords = product.category.lowercase().split(" ")
+                    val allWords = titleWords + categoryWords
+
+                    queryWords.all { queryWord ->
+                        allWords.any { it.startsWith(queryWord) }
+                    }
+                }
+
+                applySearchAndFilter(filtered)
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+    }
+
+    private fun applySearchAndFilter(filteredList: List<ModelSearchProduct>) {
+        val query = searchBox.text.toString().trim().lowercase()
+
+        if (query.isNotEmpty()) {
+            val queryWords = query.split(" ")
+
+            val searchFiltered = filteredList.filter { product ->
+                val titleWords = product.title.lowercase().split(" ")
+                val categoryWords = product.category.lowercase().split(" ")
+                val allWords = titleWords + categoryWords
+
+                queryWords.all { queryWord ->
+                    allWords.any { it.startsWith(queryWord) }
+                }
+            }
+
+            productAdapter.updateData(searchFiltered)
+        } else {
+            productAdapter.updateData(filteredList)
+        }
+    }
+
+    private fun loadProductsFromServer() {
+        val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
+        val userId = sharedPref.getInt("user_id", -1)
+        val url = "http://10.0.2.2/marketplace/get_other_products.php"
+
+        val request = object : StringRequest(Method.POST, url, { response ->
+            val json = JSONObject(response)
+            if (json.getBoolean("success")) {
+                val posts = json.getJSONArray("posts")
+                allProducts.clear()
+                for (i in 0 until posts.length()) {
+                    val post = posts.getJSONObject(i)
+                    allProducts.add(
+                        ModelSearchProduct(
+                            title = post.getString("title"),
+                            price = post.getString("price"),
+                            imageBase64 = post.getString("image"),
+                            description = post.getString("description"),
+                            category = post.getString("category"),
+                            p_id = post.getInt("id")
+                        )
+                    )
+                }
+               // productAdapter.updateData(allProducts)
+            } else {
+                Toast.makeText(this, "Failed to load products", Toast.LENGTH_SHORT).show()
+            }
+        }, {
+            Toast.makeText(this, "Network error: ${it.message}", Toast.LENGTH_SHORT).show()
+        }) {
+            override fun getParams(): Map<String, String> {
+                return mapOf("user_id" to userId.toString())
+            }
+        }
+
+        Volley.newRequestQueue(this).add(request)
+    }
+
+    private fun setupBottomNav() {
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = R.id.nav_search
         bottomNavigationView.setOnItemSelectedListener { item ->
@@ -71,7 +234,6 @@ class Search : AppCompatActivity() {
                     startActivity(Intent(this, AddProducts::class.java))
                     true
                 }
-//                R.id.nav_profile -> { startActivity(Intent(this, UserProfile::class.java)); true }
                 R.id.nav_my_products -> {
                     startActivity(Intent(this, MyProducts::class.java))
                     finish()
@@ -80,7 +242,9 @@ class Search : AppCompatActivity() {
                 else -> false
             }
         }
-
     }
-
+    private fun decodeBase64ToBitmap(base64Str: String): Bitmap {
+        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
+        return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+    }
 }

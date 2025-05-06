@@ -69,6 +69,7 @@ class Homescreen : AppCompatActivity() {
                             putExtra("price", product.price)
                             putExtra("imageBase64", product.imageBase64)
                             putExtra("p_id", product.p_id)
+                            putExtra("category", product.category)
                         }
                         startActivity(intent)
                     }
@@ -162,7 +163,8 @@ class Homescreen : AppCompatActivity() {
                             description = post.getString("description"),
                             price = post.getString("price"),
                             imageBase64 = post.getString("image"),
-                            p_id = post.getInt("id")
+                            p_id = post.getInt("id"),
+                            category = post.getString("category")
                         )
                         productList.add(product)
                     }
@@ -174,6 +176,7 @@ class Homescreen : AppCompatActivity() {
                             putExtra("price", product.price)
                             putExtra("imageBase64", product.imageBase64)
                             putExtra("p_id", product.p_id)
+                            putExtra("category", product.category)
                         }
                         startActivity(intent)
                     }

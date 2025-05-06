@@ -28,15 +28,21 @@
                 android:layout_height="24dp" />
 
             <ImageView
-                android:src="@drawable/empty_user"
+                android:id="@+id/editprofile"
                 android:layout_width="40dp"
-                android:layout_marginStart="300dp"
                 android:layout_height="40dp"
+                android:layout_marginStart="300dp"
                 android:layout_marginEnd="8dp"
-                android:background="@drawable/circle_border" />
+                android:src="@drawable/empty_user"
+                android:background="@drawable/circle_border"
+                android:cropToPadding="true"
+                android:padding="1dp"
+                android:scaleType="centerCrop"
+                android:clipToOutline="true" />
         </LinearLayout>
 
         <EditText
+            android:id="@+id/searchbox"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:hint="Search any Product.."
@@ -64,6 +70,7 @@
                 android:layout_weight="1"/>
 
             <Button
+                android:id="@+id/sortBtn"
                 android:text="Sort"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -71,6 +78,7 @@
                 android:textColor="#000000" />
 
             <Button
+                android:id="@+id/filterBtn"
                 android:text="Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
