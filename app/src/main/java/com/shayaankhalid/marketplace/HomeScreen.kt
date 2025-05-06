@@ -86,6 +86,10 @@ class Homescreen : AppCompatActivity() {
 
         swipeRefreshLayout.setOnRefreshListener {
             loadOtherProducts()
+            setupCategoryList()
+            setupProfileImage()
+            setupSearchBar()
+            setupBottomNavigation()
 
             swipeRefreshLayout.postDelayed(
                 {
@@ -97,18 +101,18 @@ class Homescreen : AppCompatActivity() {
 
     private fun setupCategoryList() {
         val categories = listOf(
-            Category(R.drawable.apple_logo, "All"),
-            Category(R.drawable.dell_xps, "Laptops"),
-            Category(R.drawable.s24_ultra, "Mobiles"),
-            Category(R.drawable.s24_ultra, "Tablets"),
-            Category(R.drawable.apple_watch, "Watches"),
-            Category(R.drawable.sony_camera, "Cameras"),
-            Category(R.drawable.s24_ultra, "Headphones"),
-            Category(R.drawable.s24_ultra, "Accessories"),
-            Category(R.drawable.s24_ultra, "Gaming Consoles"),
-            Category(R.drawable.s24_ultra, "Printers"),
-            Category(R.drawable.s24_ultra, "Peripherals"),
-            Category(R.drawable.s24_ultra, "Others")
+            Category(R.drawable.all, "All"),
+            Category(R.drawable.laptop, "Laptops"),
+            Category(R.drawable.mobile, "Mobiles"),
+            Category(R.drawable.tablets, "Tablets"),
+            Category(R.drawable.watch, "Watches"),
+            Category(R.drawable.camera, "Cameras"),
+            Category(R.drawable.headphones, "Headphones"),
+            Category(R.drawable.accessories, "Accessories"),
+            Category(R.drawable.gaming, "Gaming Consoles"),
+            Category(R.drawable.printer, "Printers"),
+            Category(R.drawable.peripherals, "Peripherals"),
+            Category(R.drawable.others, "Others")
         )
 
         val categoryRecyclerView = findViewById<RecyclerView>(R.id.categoryRecyclerView)
@@ -116,12 +120,11 @@ class Homescreen : AppCompatActivity() {
 
         categoryAdapter = CategoryAdapter(categories) { category ->
             val filteredProducts = if (category.name == "All") {
-                productList // No filtering, show all
+                productList
             } else {
                 productList.filter { it.category.equals(category.name, ignoreCase = true) }
             }
 
-            // Update the product adapter with the filtered list
             productAdapter = ProductAdapter(filteredProducts) { product ->
                 val intent = Intent(this, ViewProduct::class.java).apply {
                     putExtra("title", product.title)
@@ -135,7 +138,6 @@ class Homescreen : AppCompatActivity() {
             }
 
             productRecyclerView.adapter = productAdapter
-            Toast.makeText(this, "Filtered by: ${category.name}", Toast.LENGTH_SHORT).show()
 
             currentFilteredProducts = filteredProducts
         }
