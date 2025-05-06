@@ -27,6 +27,7 @@ class Homescreen : AppCompatActivity() {
     private lateinit var productRecyclerView: RecyclerView
     private lateinit var productAdapter: ProductAdapter
     private var productList: MutableList<Product> = mutableListOf()
+    private var currentFilteredProducts: List<Product> = productList
 
     private var sortDescending = true
 
@@ -55,14 +56,14 @@ class Homescreen : AppCompatActivity() {
                 .setTitle("Filter by Price")
                 .setItems(options) { _, which ->
                     val filteredList = when (which) {
-                        0 -> productList
-                        1 -> productList.filter { it.price.toDouble() < 10000 }
-                        2 -> productList.filter { it.price.toDouble() in 10000.0..100000.0 }
-                        3 -> productList.filter { it.price.toDouble() > 100000 }
-                        else -> productList
+                        0 -> currentFilteredProducts
+                        1 -> currentFilteredProducts.filter { it.price.toDouble() < 10000 }
+                        2 -> currentFilteredProducts.filter { it.price.toDouble() in 10000.0..100000.0 }
+                        3 -> currentFilteredProducts.filter { it.price.toDouble() > 100000 }
+                        else -> currentFilteredProducts
                     }
 
-                    val productAdapter = ProductAdapter(filteredList) { product ->
+                    productAdapter = ProductAdapter(filteredList) { product ->
                         val intent = Intent(this, ViewProduct::class.java).apply {
                             putExtra("title", product.title)
                             putExtra("description", product.description)
@@ -96,18 +97,47 @@ class Homescreen : AppCompatActivity() {
 
     private fun setupCategoryList() {
         val categories = listOf(
+            Category(R.drawable.apple_logo, "All"),
             Category(R.drawable.dell_xps, "Laptops"),
             Category(R.drawable.s24_ultra, "Mobiles"),
             Category(R.drawable.s24_ultra, "Tablets"),
             Category(R.drawable.apple_watch, "Watches"),
-            Category(R.drawable.sony_camera, "Cameras")
+            Category(R.drawable.sony_camera, "Cameras"),
+            Category(R.drawable.s24_ultra, "Headphones"),
+            Category(R.drawable.s24_ultra, "Accessories"),
+            Category(R.drawable.s24_ultra, "Gaming Consoles"),
+            Category(R.drawable.s24_ultra, "Printers"),
+            Category(R.drawable.s24_ultra, "Peripherals"),
+            Category(R.drawable.s24_ultra, "Others")
         )
 
         val categoryRecyclerView = findViewById<RecyclerView>(R.id.categoryRecyclerView)
         categoryRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
         categoryAdapter = CategoryAdapter(categories) { category ->
-            Toast.makeText(this, "Clicked: ${category.name}", Toast.LENGTH_SHORT).show()
+            val filteredProducts = if (category.name == "All") {
+                productList // No filtering, show all
+            } else {
+                productList.filter { it.category.equals(category.name, ignoreCase = true) }
+            }
+
+            // Update the product adapter with the filtered list
+            productAdapter = ProductAdapter(filteredProducts) { product ->
+                val intent = Intent(this, ViewProduct::class.java).apply {
+                    putExtra("title", product.title)
+                    putExtra("description", product.description)
+                    putExtra("price", product.price)
+                    putExtra("imageBase64", product.imageBase64)
+                    putExtra("p_id", product.p_id)
+                    putExtra("category", product.category)
+                }
+                startActivity(intent)
+            }
+
+            productRecyclerView.adapter = productAdapter
+            Toast.makeText(this, "Filtered by: ${category.name}", Toast.LENGTH_SHORT).show()
+
+            currentFilteredProducts = filteredProducts
         }
 
         categoryRecyclerView.adapter = categoryAdapter
@@ -208,15 +238,27 @@ class Homescreen : AppCompatActivity() {
     private fun sortProducts() {
         sortDescending = !sortDescending
 
-        productList.sortWith(compareBy { product ->
-            product.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
-        })
-
-        if (sortDescending) {
-            productList.reverse()
+        currentFilteredProducts = currentFilteredProducts.sortedBy {
+            it.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
         }
 
-        productAdapter.notifyDataSetChanged()
+        if (sortDescending) {
+            currentFilteredProducts = currentFilteredProducts.reversed()
+        }
+
+        productAdapter = ProductAdapter(currentFilteredProducts) { product ->
+            val intent = Intent(this, ViewProduct::class.java).apply {
+                putExtra("title", product.title)
+                putExtra("description", product.description)
+                putExtra("price", product.price)
+                putExtra("imageBase64", product.imageBase64)
+                putExtra("p_id", product.p_id)
+                putExtra("category", product.category)
+            }
+            startActivity(intent)
+        }
+
+        productRecyclerView.adapter = productAdapter
         Toast.makeText(
             this,
             if (sortDescending) "Sorted: High to Low" else "Sorted: Low to High",

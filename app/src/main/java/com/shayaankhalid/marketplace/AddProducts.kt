@@ -3,6 +3,7 @@ package com.shayaankhalid.marketplace
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,24 +19,25 @@ import java.io.ByteArrayOutputStream
 class AddProducts : AppCompatActivity() {
 
     private lateinit var inputName: EditText
-    private lateinit var inputCategory: EditText
     private lateinit var inputDescription: EditText
     private lateinit var inputPrice: EditText
+    private lateinit var categorySpinner: Spinner // 🔁 Spinner instead of EditText
     private lateinit var buttonAdd: Button
     private lateinit var buttonChooseImage: Button
     private lateinit var imagePreview: ImageView
 
     private var base64Image: String? = null
     private val PICK_IMAGE_REQUEST = 1
+    private lateinit var selectedCategory: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_products)
 
         inputName = findViewById(R.id.input_name)
-        inputCategory = findViewById(R.id.category)
         inputDescription = findViewById(R.id.input_description)
         inputPrice = findViewById(R.id.input_price)
+        categorySpinner = findViewById(R.id.spinner_category) // 🔁 find Spinner
         buttonAdd = findViewById(R.id.button_add)
         buttonChooseImage = findViewById(R.id.button_choose_image)
         imagePreview = findViewById(R.id.image_preview)
@@ -43,6 +45,8 @@ class AddProducts : AppCompatActivity() {
         findViewById<ImageView>(R.id.back_arrow).setOnClickListener {
             finish()
         }
+
+        setupSpinner() // 🔁 set up category dropdown
 
         buttonChooseImage.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -54,19 +58,52 @@ class AddProducts : AppCompatActivity() {
         }
     }
 
+    private fun setupSpinner() {
+        val categories = listOf(
+            "Select a category",
+            "Laptops",
+            "Mobiles",
+            "Tablets",
+            "Watches",
+            "Cameras",
+            "Headphones",
+            "Accessories",
+            "Gaming Consoles",
+            "Printers",
+            "Peripherals",
+            "Others"
+        )
+        val adapter = object : ArrayAdapter<String>(
+            this,
+            android.R.layout.simple_spinner_item,
+            categories
+        ) {
+            override fun isEnabled(position: Int): Boolean = position != 0
+
+            override fun getDropDownView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
+                val view = super.getDropDownView(position, convertView, parent)
+                (view as TextView).setTextColor(if (position == 0) Color.GRAY else Color.BLACK)
+                return view
+            }
+        }
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        categorySpinner.adapter = adapter
+    }
+
     private fun submitProduct() {
         val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
         val userId = sharedPref.getInt("user_id", -1)
 
         val name = inputName.text.toString().trim()
-        val category = inputCategory.text.toString().trim()
+        selectedCategory = categorySpinner.selectedItem.toString()
         val description = inputDescription.text.toString().trim()
         val priceText = inputPrice.text.toString().trim()
         val price = priceText.toDoubleOrNull()
 
-        Log.d("AddProduct", "Collected inputs: userId=$userId, name=$name, category=$category, description=$description, priceText=$priceText, price=$price, hasImage=${base64Image != null}")
+        Log.d("AddProduct", "Collected inputs: userId=$userId, name=$name, category=$selectedCategory, description=$description, priceText=$priceText, price=$price, hasImage=${base64Image != null}")
 
-        if (name.isEmpty() || category.isEmpty() || description.isEmpty() || priceText.isEmpty() || price == null || base64Image == null) {
+        if (name.isEmpty() || selectedCategory == "Select a category" || description.isEmpty() || priceText.isEmpty() || price == null || base64Image == null) {
             Toast.makeText(this, "Please fill all fields correctly and choose an image", Toast.LENGTH_SHORT).show()
             Log.d("AddProduct", "Validation failed: some fields are empty or invalid")
             return
@@ -107,7 +144,7 @@ class AddProducts : AppCompatActivity() {
                 params["name"] = name
                 params["description"] = description
                 params["price"] = price.toString()
-                params["category"] = category
+                params["category"] = selectedCategory
                 params["image"] = base64Image ?: ""
                 Log.d("AddProduct", "POST params: $params")
                 return params
@@ -116,7 +153,6 @@ class AddProducts : AppCompatActivity() {
 
         Volley.newRequestQueue(this).add(stringRequest)
     }
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
