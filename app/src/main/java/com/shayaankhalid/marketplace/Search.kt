@@ -53,6 +53,8 @@ class Search : AppCompatActivity() {
                 putExtra("price", product.price)
                 putExtra("imageBase64", product.imageBase64)
                 putExtra("p_id", product.p_id)
+                putExtra("u_id", product.u_id)
+                putExtra("category", product.category)
             }
             startActivity(intent)
         }
@@ -200,7 +202,8 @@ class Search : AppCompatActivity() {
                             imageBase64 = post.getString("image"),
                             description = post.getString("description"),
                             category = post.getString("category"),
-                            p_id = post.getInt("id")
+                            p_id = post.getInt("id"),
+                            u_id = post.getInt("user_id")
                         )
                     )
                 }
@@ -236,6 +239,11 @@ class Search : AppCompatActivity() {
                 }
                 R.id.nav_my_products -> {
                     startActivity(Intent(this, MyProducts::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_message -> {
+                    startActivity(Intent(this, Messages::class.java))
                     finish()
                     true
                 }

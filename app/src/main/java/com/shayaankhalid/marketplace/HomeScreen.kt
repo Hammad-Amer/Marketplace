@@ -71,6 +71,7 @@ class Homescreen : AppCompatActivity() {
                             putExtra("imageBase64", product.imageBase64)
                             putExtra("p_id", product.p_id)
                             putExtra("category", product.category)
+                            putExtra("u_id", product.u_id)
                         }
                         startActivity(intent)
                     }
@@ -133,6 +134,7 @@ class Homescreen : AppCompatActivity() {
                     putExtra("imageBase64", product.imageBase64)
                     putExtra("p_id", product.p_id)
                     putExtra("category", product.category)
+                    putExtra("u_id", product.u_id)
                 }
                 startActivity(intent)
             }
@@ -196,7 +198,8 @@ class Homescreen : AppCompatActivity() {
                             price = post.getString("price"),
                             imageBase64 = post.getString("image"),
                             p_id = post.getInt("id"),
-                            category = post.getString("category")
+                            category = post.getString("category"),
+                            u_id = post.getInt("user_id")
                         )
                         productList.add(product)
                     }
@@ -209,6 +212,7 @@ class Homescreen : AppCompatActivity() {
                             putExtra("imageBase64", product.imageBase64)
                             putExtra("p_id", product.p_id)
                             putExtra("category", product.category)
+                            putExtra("u_id", product.u_id)
                         }
                         startActivity(intent)
                     }
@@ -256,6 +260,7 @@ class Homescreen : AppCompatActivity() {
                 putExtra("imageBase64", product.imageBase64)
                 putExtra("p_id", product.p_id)
                 putExtra("category", product.category)
+                putExtra("u_id", product.u_id)
             }
             startActivity(intent)
         }
@@ -290,6 +295,10 @@ class Homescreen : AppCompatActivity() {
                 }
                 R.id.nav_my_products -> {
                     startActivity(Intent(this, MyProducts::class.java))
+                    true
+                }
+                R.id.nav_message -> {
+                    startActivity(Intent(this, Messages::class.java))
                     true
                 }
                 else -> false

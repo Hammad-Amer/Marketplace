@@ -62,7 +62,6 @@
             android:id="@+id/productPrice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
             android:textSize="16sp"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="12dp" />
@@ -75,5 +74,16 @@
             android:textStyle="bold"
             android:backgroundTint="#4CAF50"
             android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/chatButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Chat with Seller"
+            android:textStyle="bold"
+            android:backgroundTint="#2196F3"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="8dp" />
+
     </LinearLayout>
 </ScrollView>

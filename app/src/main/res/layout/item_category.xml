@@ -14,6 +14,7 @@
         android:background="@drawable/circle_border"
         android:scaleType="fitCenter"
         android:clipToOutline="true"
+        android:padding="2dp"
     />
 
     <TextView

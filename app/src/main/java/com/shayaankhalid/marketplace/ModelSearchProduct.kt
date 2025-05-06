@@ -6,5 +6,6 @@ data class ModelSearchProduct(
     val imageBase64: String,
     val description: String,
     val category: String,
-    val p_id: Int
+    val p_id: Int,
+    val u_id: Int
 )

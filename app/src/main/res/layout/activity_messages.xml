@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <!-- Content Area -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="45dp"
+
+            />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp">
+
+
+
+
+            <ImageView
+                android:id="@+id/menu_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/menu"
+                android:layout_alignParentStart="true"
+                android:contentDescription="Menu"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                />
+
+            <TextView
+                android:id="@+id/messages_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Messages"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_centerInParent="true" />
+
+            <ImageView
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="16dp"
+                android:id="@+id/profile_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:src="@drawable/empty_user"
+                android:contentDescription="Profile"
+                android:background="@drawable/circle_border"
+                android:cropToPadding="true"
+                android:padding="1dp"
+                android:scaleType="centerCrop"
+                android:clipToOutline="true"
+
+                />
+
+
+        </RelativeLayout>
+
+        <!-- RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewMessages"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="16dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+    </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:layout_gravity="bottom"
+        android:background="#FFFFFF"
+        app:menu="@menu/menu"
+        app:labelVisibilityMode="labeled"
+        app:itemHorizontalTranslationEnabled="false"
+        app:itemIconSize="24dp"
+        />
+
+    <ImageView
+        android:id="@+id/nav_bar_mid_btn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="40dp"
+        android:src="@drawable/nav_bar_mid"
+        android:background="@drawable/circle_border"
+        android:scaleType="centerInside"
+        android:elevation="6dp" />
+</FrameLayout>
