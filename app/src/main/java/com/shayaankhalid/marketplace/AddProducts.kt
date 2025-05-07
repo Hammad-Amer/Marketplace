@@ -1,9 +1,12 @@
 package com.shayaankhalid.marketplace
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -53,10 +56,60 @@ class AddProducts : AppCompatActivity() {
             startActivityForResult(intent, PICK_IMAGE_REQUEST)
         }
 
+
+
         buttonAdd.setOnClickListener {
-            submitProduct()
+
+            if(isNetworkAvailable())
+            {
+                submitProduct()
+            }
+            else {
+                Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show()
+                addToPending()
+            }
         }
     }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun addToPending() {
+        val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
+        val userId = sharedPref.getInt("user_id", -1)
+
+        val name = inputName.text.toString().trim()
+        selectedCategory = categorySpinner.selectedItem.toString()
+        val description = inputDescription.text.toString().trim()
+        val priceText = inputPrice.text.toString().trim()
+        val price = priceText.toDoubleOrNull()
+
+        if (name.isEmpty() || selectedCategory == "Select a category" || description.isEmpty() || priceText.isEmpty() || price == null || base64Image == null) {
+            Toast.makeText(this, "Please fill all fields correctly and choose an image", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val product = Product(
+            p_id = 0,
+            u_id = userId,
+            title = name,
+            description = description,
+            price = priceText,
+            imageBase64 = base64Image!!,
+            category = selectedCategory
+        )
+
+        val dbHelper = DBHelper(this)
+        dbHelper.addPendingProduct(product)
+
+        Toast.makeText(this, "Saved offline. Will sync when online.", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
 
     private fun setupSpinner() {
         val categories = listOf(

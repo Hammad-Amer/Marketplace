@@ -28,16 +28,17 @@ class Chat : AppCompatActivity() {
 
     private var currentUserId: Int = -1
     private var receiverId: Int = -1
-
+    var receiverName=""
+    private lateinit var db: DBHelper
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
-
+        db = DBHelper(this)
         recyclerView = findViewById(R.id.recyclerViewMessages)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         receiverId = intent.getIntExtra("reciever_id", -1)
-        val receiverName = intent.getStringExtra("reciever_name") ?: "Unknown"
+        receiverName = intent.getStringExtra("reciever_name") ?: "Unknown"
         val receiverPfp = intent.getStringExtra("reciever_pfp")
         val editTextMessage = findViewById<EditText>(R.id.editTextMessage)
         val buttonSend = findViewById<ImageView>(R.id.buttonSend)
@@ -122,8 +123,9 @@ class Chat : AppCompatActivity() {
                         val receiverIdMsg = msgObj.getInt("receiver_id")
                         val content = msgObj.getString("message")
                         val timestamp = msgObj.getLong("timestamp")
-
+                        val msgid = msgObj.getInt("id")
                         messageList.add(ChatMessageModel(senderId, receiverIdMsg, content, timestamp))
+                        db.insertMessage(msgid,senderId, receiverName, receiverIdMsg, content, timestamp)
                     }
                     adapter.notifyDataSetChanged()
 
@@ -134,13 +136,26 @@ class Chat : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                loadOfflineMessages()
             }
         }, { error ->
             error.printStackTrace()
+            loadOfflineMessages()
         })
 
         queue.add(request)
     }
+
+    private fun loadOfflineMessages() {
+        val cachedMessages = db.getMessagesBetween(currentUserId, receiverId)
+        messageList.clear()
+        messageList.addAll(cachedMessages)
+        adapter.notifyDataSetChanged()
+
+        recyclerView.scrollToPosition(messageList.size - 1)
+    }
+
+
 
     private fun sendMessage(senderId: Int, receiverId: Int, message: String) {
         val url = "http://10.0.2.2/marketplace/send_message.php"

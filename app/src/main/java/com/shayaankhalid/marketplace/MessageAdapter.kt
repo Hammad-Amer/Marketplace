@@ -28,12 +28,17 @@ class MessageAdapter(private val users: List<MessagesModel>) :
         val user = users[position]
         holder.userName.text = user.name
 
-        try {
-            val decodedBytes = Base64.decode(user.pfp, Base64.DEFAULT)
-            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-            holder.userAvatar.setImageBitmap(bitmap)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        if (user.pfp == "DEFAULT" || user.pfp.isNullOrEmpty()) {
+            holder.userAvatar.setImageResource(R.drawable.empty_user)
+        } else {
+            try {
+                val decodedBytes = Base64.decode(user.pfp, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                holder.userAvatar.setImageBitmap(bitmap)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                holder.userAvatar.setImageResource(R.drawable.empty_user)
+            }
         }
 
         holder.itemView.setOnClickListener {

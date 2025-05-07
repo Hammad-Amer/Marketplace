@@ -1,7 +1,10 @@
 package com.shayaankhalid.marketplace
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.util.Base64
 import android.widget.Button
@@ -52,18 +55,32 @@ class ViewProduct : AppCompatActivity() {
             finish()
         }
 
-        buyBtn.setOnClickListener {
-            Toast.makeText(this, "Purchase started!", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, Buy::class.java).apply {
-                putExtra("title", productName)
-                putExtra("description", productDesc)
-                putExtra("price", productPrice)
-                putExtra("imageBase64", productImageBase64)
-                putExtra("p_id", p_id)
+         buyBtn.setOnClickListener {
+
+             if(isNetworkAvailable())
+             {
+
+                 Toast.makeText(this, "Purchase started!", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, Buy::class.java).apply {
+                    putExtra("title", productName)
+                    putExtra("description", productDesc)
+                    putExtra("price", productPrice)
+                    putExtra("imageBase64", productImageBase64)
+                    putExtra("p_id", p_id)
+                }
+                startActivity(intent)
+
+
             }
-            startActivity(intent)
+             else {
+                 Toast.makeText(this, "Offline mode: You need an Internet Connection to Buy Products", Toast.LENGTH_SHORT).show()
+             }
         }
+
+
+
         chatButton.setOnClickListener {
+            if(isNetworkAvailable()) {
             val intent = Intent(this, Chat::class.java).apply {
                 putExtra("reciever_id", u_id)
                 putExtra("reciever_name", productName)
@@ -71,7 +88,18 @@ class ViewProduct : AppCompatActivity() {
             }
             startActivity(intent)
         }
+            else {
+                Toast.makeText(this, "Offline mode: You need an Internet Connection to Chat", Toast.LENGTH_SHORT ).show()
 
+            }
+       }
 
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }

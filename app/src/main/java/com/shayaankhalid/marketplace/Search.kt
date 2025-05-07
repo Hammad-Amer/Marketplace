@@ -65,7 +65,7 @@ class Search : AppCompatActivity() {
 
 
         setupBottomNav()
-        loadProductsFromServer()
+        loadData()
         setupSearchBox()
         setupProfileImage()
     }
@@ -81,14 +81,22 @@ class Search : AppCompatActivity() {
             } catch (e: Exception) {
                 null
             }
-        } else {
+        }
+        else
+        {
             null
         }
 
         profileImage.setImageBitmap(bitmap ?: getDrawable(R.drawable.empty_user)?.toBitmap())
-        profileImage.setOnClickListener {
-            startActivity(Intent(this, EditProfile::class.java))
+        if(isNetworkAvailable()) {
+            profileImage.setOnClickListener {
+                startActivity(Intent(this, EditProfile::class.java))
+            }
         }
+        else{
+            Toast.makeText(this, "Offline mode: Cannot edit profile", Toast.LENGTH_SHORT).show()
+        }
+
     }
 
     private fun sortProducts() {
@@ -182,7 +190,14 @@ class Search : AppCompatActivity() {
             productAdapter.updateData(filteredList)
         }
     }
-
+    private fun loadData() {
+        val isOnline = isNetworkAvailable()
+        if (isOnline) {
+            loadProductsFromServer()
+        } else {
+            loadFromCache()
+        }
+    }
     private fun loadProductsFromServer() {
         val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
         val userId = sharedPref.getInt("user_id", -1)
@@ -222,6 +237,30 @@ class Search : AppCompatActivity() {
         Volley.newRequestQueue(this).add(request)
     }
 
+    private fun loadFromCache() {
+        val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
+        val userId = sharedPref.getInt("user_id", -1)
+
+        val dbHelper = DBHelper(this)
+        val cachedProducts = dbHelper.getOtherProducts(userId)
+
+        allProducts.clear()
+        allProducts.addAll(cachedProducts.map {
+            ModelSearchProduct(
+                title = it.title,
+                price = it.price,
+                imageBase64 = it.imageBase64,
+                description = it.description,
+                category = it.category,
+                p_id = it.p_id,
+                u_id = it.u_id
+            )
+        })
+
+        //productAdapter.updateData(allProducts)
+        Toast.makeText(this, "Loaded cached products (offline)", Toast.LENGTH_SHORT).show()
+    }
+
     private fun setupBottomNav() {
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = R.id.nav_search
@@ -255,4 +294,10 @@ class Search : AppCompatActivity() {
         val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
     }
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetworkInfo
+        return activeNetwork != null && activeNetwork.isConnected
+    }
+
 }
