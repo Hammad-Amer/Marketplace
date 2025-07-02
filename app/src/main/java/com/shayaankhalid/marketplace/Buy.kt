@@ -15,12 +15,14 @@ import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
 
 class Buy : AppCompatActivity() {
 
     private var isCouponApplied = false
     private val TAG = "BuyActivity"
-
+    private var productowner: Int = -1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_buy)
@@ -30,6 +32,16 @@ class Buy : AppCompatActivity() {
         val productPrice = intent.getStringExtra("price") ?: "N/A"
         val productImageBase64 = intent.getStringExtra("imageBase64")
         val p_id = intent.getIntExtra("p_id", -1)
+
+
+        fetchUserIdByProductId(p_id) { ownerId ->
+            if (ownerId != null) {
+                productowner = ownerId
+                Log.d(TAG, "Product $p_id is owned by user $productowner")
+            } else {
+                Log.e(TAG, "Failed to fetch owner for product $p_id")
+            }
+        }
 
         val originalAmount = productPrice.filter { it.isDigit() }.toIntOrNull() ?: 0
 
@@ -103,6 +115,8 @@ class Buy : AppCompatActivity() {
                         val message = jsonResponse.getString("message")
                         if (success) {
                             Toast.makeText(this, "Order placed", Toast.LENGTH_SHORT).show()
+                            val soldMessage = "Your product “$productName” has been sold!"
+                            sendNotificationToReceiver(soldMessage)
                             finish()
                         } else {
                             Toast.makeText(this, "Failed: $message", Toast.LENGTH_SHORT).show()
@@ -124,5 +138,96 @@ class Buy : AppCompatActivity() {
 
             queue.add(stringRequest)
         }
+    }
+
+
+    fun fetchUserIdByProductId(
+        productId: Int,
+        callback: (userId: Int?) -> Unit
+    ) {
+        val url = "http://10.0.2.2/marketplace/get_user_by_product.php?product_id=$productId"
+        val queue = Volley.newRequestQueue(this)
+
+        val request = StringRequest(
+            Request.Method.GET,
+            url,
+            { response ->
+                try {
+                    val obj = JSONObject(response)
+                    if (obj.getString("status") == "success") {
+                        callback(obj.getInt("user_id"))
+                    } else {
+                        callback(null)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    callback(null)
+                }
+            },
+            { error ->
+                error.printStackTrace()
+                callback(null)
+            }
+        )
+
+        queue.add(request)
+    }
+
+    private fun sendNotificationToReceiver(messageText: String) {
+        Log.d("FCM-DEBUG", "▶︎ sendNotificationToReceiver() START")
+        val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
+        val senderId = sharedPref.getInt("user_id", 0)
+        val senderName = "Marketplace"
+        val queue = Volley.newRequestQueue(this)
+
+        val url = "http://10.0.2.2/marketplace/get_fcm_token.php?user_id=$productowner"
+        Log.d("FCM-DEBUG", "Fetching receiver token from: $url")
+        val request = StringRequest(Request.Method.GET, url, { response ->
+            Log.d("FCM-DEBUG", "Got response: $response")
+            try {
+                val jsonObject = JSONObject(response)
+
+                // use the correct key names:
+                if (jsonObject.optBoolean("success", false)) {
+                    val receiverToken = jsonObject.optString("fcm_token")
+
+                    Log.d("FCM-DEBUG", "Parsed receiverToken = $receiverToken")
+
+                    val notification = Notification(
+                        message = NotificationData(
+                            token = receiverToken,
+                            data = hashMapOf(
+                                "title" to senderName,
+                                "body"  to messageText
+                            )
+                        )
+                    )
+
+                    NotificationApi.create()
+                        .sendNotification(notification)
+                        .enqueue(object : Callback<Notification> {
+                            override fun onResponse(
+                                call: Call<Notification>,
+                                response: retrofit2.Response<Notification>
+                            ) {
+                                Log.d("FCM-DEBUG", "✅ Notification sent!  HTTP ${response.code()}")
+                            }
+
+                            override fun onFailure(call: Call<Notification>, t: Throwable) {
+                                Log.e("FCM-DEBUG", "🚨 Retrofit failure: ${t.message}")
+                            }
+                        })
+                } else {
+                    Log.e("FCM-DEBUG", "Response success flag was false")
+                }
+            } catch (e: Exception) {
+                Log.e("FCM-DEBUG", "JSON parse error", e)
+            }
+        }, { error ->
+            Log.e("FCM-DEBUG", "Volley error fetching token", error)
+        })
+
+
+        queue.add(request)
     }
 }

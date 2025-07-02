@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.android) version "2.1.0"
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -33,6 +34,10 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    packagingOptions{
+        exclude("META-INF/DEPENDENCIES")
+    }
 }
 
 dependencies {
@@ -42,11 +47,19 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.database.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation ("com.android.volley:volley:1.2.1")
     implementation ("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.karumi:dexter:6.2.3")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
 
 
 }

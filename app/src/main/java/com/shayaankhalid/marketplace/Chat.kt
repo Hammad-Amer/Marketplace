@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
 import android.util.Base64
+import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +16,11 @@ import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
 import android.widget.EditText
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 class Chat : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
@@ -168,6 +174,7 @@ class Chat : AppCompatActivity() {
                     val jsonResponse = JSONObject(response)
                     if (jsonResponse.getString("status") == "success") {
                         fetchMessages()
+                        sendNotificationToReceiver(message)
                         recyclerView.scrollToPosition(messageList.size - 1)
 
                     }
@@ -190,4 +197,63 @@ class Chat : AppCompatActivity() {
 
         queue.add(postRequest)
     }
+
+    private fun sendNotificationToReceiver(messageText: String) {
+        Log.d("FCM-DEBUG", "▶︎ sendNotificationToReceiver() START")
+        val sharedPref = getSharedPreferences("Marketplace", MODE_PRIVATE)
+        val senderId = sharedPref.getInt("user_id", 0)
+        val senderName = sharedPref.getString("user_name", "Someone") ?: "Someone"
+        val queue = Volley.newRequestQueue(this)
+
+        val url = "http://10.0.2.2/marketplace/get_fcm_token.php?user_id=$receiverId"
+        Log.d("FCM-DEBUG", "Fetching receiver token from: $url")
+        val request = StringRequest(Request.Method.GET, url, { response ->
+            Log.d("FCM-DEBUG", "Got response: $response")
+            try {
+                val jsonObject = JSONObject(response)
+
+                // use the correct key names:
+                if (jsonObject.optBoolean("success", false)) {
+                    val receiverToken = jsonObject.optString("fcm_token")
+
+                    Log.d("FCM-DEBUG", "Parsed receiverToken = $receiverToken")
+
+                    val notification = Notification(
+                        message = NotificationData(
+                            token = receiverToken,
+                            data = hashMapOf(
+                                "title" to senderName,
+                                "body"  to messageText
+                            )
+                        )
+                    )
+
+                    NotificationApi.create()
+                        .sendNotification(notification)
+                        .enqueue(object : Callback<Notification> {
+                            override fun onResponse(
+                                call: Call<Notification>,
+                                response: Response<Notification>
+                            ) {
+                                Log.d("FCM-DEBUG", "✅ Notification sent!  HTTP ${response.code()}")
+                            }
+
+                            override fun onFailure(call: Call<Notification>, t: Throwable) {
+                                Log.e("FCM-DEBUG", "🚨 Retrofit failure: ${t.message}")
+                            }
+                        })
+                } else {
+                    Log.e("FCM-DEBUG", "Response success flag was false")
+                }
+            } catch (e: Exception) {
+                Log.e("FCM-DEBUG", "JSON parse error", e)
+            }
+        }, { error ->
+            Log.e("FCM-DEBUG", "Volley error fetching token", error)
+        })
+
+
+        queue.add(request)
+    }
+
 }

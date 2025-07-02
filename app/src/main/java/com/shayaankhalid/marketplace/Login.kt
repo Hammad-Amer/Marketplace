@@ -2,6 +2,7 @@ package com.shayaankhalid.marketplace
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -10,9 +11,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.google.firebase.messaging.FirebaseMessaging
+import org.json.JSONException
 import org.json.JSONObject
 
 class Login : AppCompatActivity() {
@@ -57,6 +61,15 @@ class Login : AppCompatActivity() {
                         sharedPref.edit().putString("user_email", userEmail).apply()
                         sharedPref.edit().putString("pfp", pfp).apply()
 
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val token = task.result
+                                updateFCMTokenOnServer(
+                                    userId.toString(),
+                                    token ?: ""
+                                )
+                            }
+                        }
                         startActivity(Intent(this, Homescreen::class.java))
                         finish()
                     } else {
@@ -75,4 +88,38 @@ class Login : AppCompatActivity() {
             Volley.newRequestQueue(this).add(stringRequest)
         }
     }
+
+
+
+    private fun updateFCMTokenOnServer(userId: String, token: String) {
+        val url = "http://10.0.2.2/marketplace/update_fcm_token.php"
+        val request = object : StringRequest(
+            Request.Method.POST, url,
+            { response ->
+                // response is JSON: {"success":true} or {"success":false,"message":"..."}
+                try {
+                    val json = JSONObject(response)
+                    if (json.getBoolean("success")) {
+                        Log.d("FCM", "Token successfully updated on server")
+                    } else {
+                        Log.e("FCM", "Server error: ${json.optString("message")}")
+                    }
+                } catch (e: JSONException) {
+                    Log.e("FCM", "Invalid JSON: $response")
+                }
+            },
+            { error ->
+                Log.e("FCM", "Token update failed", error)
+            }
+        ) {
+            override fun getParams(): Map<String, String> {
+                return mapOf(
+                    "user_id"   to userId,
+                    "fcm_token" to token
+                )
+            }
+        }
+        Volley.newRequestQueue(this).add(request)
+    }
+
 }

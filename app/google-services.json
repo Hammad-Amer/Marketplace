@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "716819042035",
+    "project_id": "marketplace-7143e",
+    "storage_bucket": "marketplace-7143e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:716819042035:android:976fd412a3f1c9b7d0f186",
+        "android_client_info": {
+          "package_name": "com.shayaankhalid.marketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCuR06nLSsEIPXfXSobRKaD4aFujcWkfY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
